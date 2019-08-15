@@ -5,10 +5,22 @@
     "cross-env": "^5.2.0",
     "lerna": "^3.16.4"
   },
-  "dependencies": {
-    "co": "^4.6.0",
-    "core-async": "^0.1.1",
-    "dotenv": "^8.0.0",
-    "ramda": "^0.26.1"
-  }
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/plugs-js/plugs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/plugs-js/plugs/issues"
+  },
+  "homepage": "https://github.com/plugs-js/plugs#readme",
+  "keywords": [],
+  "description": ""
 }

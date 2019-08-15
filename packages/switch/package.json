@@ -1,0 +1,14 @@
+{
+  "name": "switch",
+  "version": "0.0.1",
+  "description": "decorating plugs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logan Powell",
+  "license": "MIT",
+  "dependencies": {
+    "main": "0.0.1" 
+  }
+}

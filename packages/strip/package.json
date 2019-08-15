@@ -1,0 +1,14 @@
+{
+  "name": "strip",
+  "version": "0.0.1",
+  "description": "plugs web worker abstraction",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Logan Powell",
+  "license": "MIT",
+  "dependencies": {
+    "main": "0.0.1" 
+  }
+}
