@@ -1,0 +1,14 @@
+{
+  "name": "root",
+  "private": true,
+  "devDependencies": {
+    "cross-env": "^5.2.0",
+    "lerna": "^3.16.4"
+  },
+  "dependencies": {
+    "co": "^4.6.0",
+    "core-async": "^0.1.1",
+    "dotenv": "^8.0.0",
+    "ramda": "^0.26.1"
+  }
+}
