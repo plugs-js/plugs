@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.0.4-alpha.0",
+  "version": "0.0.4-alpha.2",
   "description": "plugs service worker abstraction",
   "main": "index.js",
   "scripts": {
@@ -12,7 +12,7 @@
   "author": "Logan Powell",
   "license": "MIT",
   "dependencies": {
-    "@plugs/main": "^0.0.4-alpha.1"
+    "@plugs/main": "^0.0.4-alpha.2"
   },
   "gitHead": "4f30533044f8c1f6967ff29a7eae6c17ea5b19e1"
 }
