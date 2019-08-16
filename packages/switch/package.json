@@ -1,6 +1,6 @@
 {
   "name": "@plugs/switch",
-  "version": "0.0.3-alpha.2",
+  "version": "0.0.4-alpha.0",
   "description": "decorating plugs",
   "main": "index.js",
   "scripts": {

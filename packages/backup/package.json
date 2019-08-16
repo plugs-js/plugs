@@ -1,6 +1,6 @@
 {
   "name": "@plugs/backup",
-  "version": "0.0.3-alpha.2",
+  "version": "0.0.4-alpha.0",
   "description": "plugs service worker abstraction",
   "main": "index.js",
   "scripts": {
