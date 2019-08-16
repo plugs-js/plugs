@@ -12,7 +12,7 @@
   "author": "Logan Powell",
   "license": "MIT",
   "dependencies": {
-    "@plugs/main": "0.0.4-alpha.1"
+    "@plugs/main": "^0.0.4-alpha.1"
   },
   "gitHead": "7d2df2be434ec39c7deb13b5ee325ef4f56aebe3"
 }
