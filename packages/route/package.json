@@ -1,6 +1,6 @@
 {
   "name": "@plugs/route",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "plugs URL routing abstraction",
   "main": "index.js",
   "scripts": {

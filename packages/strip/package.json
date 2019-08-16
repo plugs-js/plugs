@@ -1,6 +1,6 @@
 {
   "name": "@plugs/strip",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "plugs web worker abstraction",
   "main": "index.js",
   "scripts": {

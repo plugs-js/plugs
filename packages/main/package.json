@@ -1,6 +1,6 @@
 {
   "name": "@plugs/main",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "core utilities for working with plugs",
   "main": "index.js",
   "scripts": {
