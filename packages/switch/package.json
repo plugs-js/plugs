@@ -1,5 +1,8 @@
 {
   "name": "@plugs/switch",
+  "publishConfig": {
+    "access": "public"
+  },
   "version": "0.0.4-alpha.0",
   "description": "decorating plugs",
   "main": "index.js",
@@ -11,5 +14,5 @@
   "dependencies": {
     "main": "0.0.1"
   },
-  "gitHead": "075e4e190a9af56086feb9278a4afd997c3155e9"
+  "gitHead": "4f30533044f8c1f6967ff29a7eae6c17ea5b19e1"
 }
