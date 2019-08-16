@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "plugs",
   "publishConfig": {
     "access": "public"
   },
@@ -7,7 +7,7 @@
     "cross-env": "^5.2.0",
     "lerna": "^3.16.4"
   },
-  "version": "1.0.0",
+  "version": "0.0.1",
   "main": "index.js",
   "dependencies": {},
   "scripts": {
