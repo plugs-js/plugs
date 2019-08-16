@@ -1,5 +1,5 @@
 {
-  "name": "backup",
+  "name": "@plugs/backup",
   "version": "0.0.1",
   "description": "plugs service worker abstraction",
   "main": "index.js",
@@ -10,5 +10,6 @@
   "license": "MIT",
   "dependencies": {
     "main": "0.0.1"
-  }
+  },
+  "gitHead": "3c8a7f0f6476112f44b6cae3a6648b6b27f7bb77"
 }
