@@ -1,7 +1,7 @@
 {
-  "name": "@plugs/switch",
+  "name": "test",
   "version": "0.0.1",
-  "description": "decorating plugs",
+  "description": "tests for plugs",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,6 +9,10 @@
   "author": "Logan Powell",
   "license": "MIT",
   "dependencies": {
-    "main": "0.0.1" 
+    "axios": "^0.19.0",
+    "co": "^4.6.0",
+    "core-async": "^0.1.1",
+    "@plugs/main": "^0.0.1",
+    "ramda": "^0.26.1"
   }
 }
