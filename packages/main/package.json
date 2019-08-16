@@ -1,6 +1,5 @@
 {
   "name": "@plugs/main",
-  "private": true,
   "version": "0.0.1",
   "description": "core utilities for working with plugs",
   "main": "index.js",
