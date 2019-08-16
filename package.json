@@ -1,6 +1,5 @@
 {
   "name": "root",
-  "private": true,
   "devDependencies": {
     "cross-env": "^5.2.0",
     "lerna": "^3.16.4"
