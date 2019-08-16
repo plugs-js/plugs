@@ -10,6 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "co": "^4.6.0",
-    "core-async": "^0.1.1"
+    "core-async": "^0.1.1",
+    "ramda": "^0.26.1"
   }
 }
