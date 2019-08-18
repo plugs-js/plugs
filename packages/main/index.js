@@ -124,4 +124,5 @@ module.exports = {
   race,
   lift,
   breaker,
+  reach,
 }
