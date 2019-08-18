@@ -1,6 +1,6 @@
 const { Channel, alts } = require('core-async')
 const co = require('co')
-const { run, reach, race, tapWith, breaker } = require('@plugs/main') //?
+const { run, reach, race, lift, breaker } = require('@plugs/main')
 const axios = require('axios')
 const r = require('ramda')
 
@@ -14,9 +14,11 @@ const getNamesList = r.pipe(
 co(function*() {
   const _E_ = new Channel()
   const _I_ = new Channel()
-  _I_.put(['https://api.census.gov/data/2017/acs/acs1/geography.json', {}])
-  // const _O_ = yield run(reach(_E_), lift(getNamesList)(_E_))(_I_)
-  // const O = _O_.take()
-  const O = yield run(reach(_E_), lift(getNamesList)(_E_), breaker()(_E_))(_I_)
+  _I_.put({
+    fetch_url: 'https://api.census.gov/data/2017/acs/acs1/geography.json',
+    fetch_opts: {},
+  })
+
+  const O = yield run(reach, lift(getNamesList), breaker())(_E_)(_I_)
   return O
 }) //?

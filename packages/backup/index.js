@@ -1,5 +1,5 @@
-const main = require('@plugs/main')
-
-const me = 'backup'
-
-console.log(`requiring ${main} in ${me}`)
+const { Channel, alts } = require('core-async')
+const co = require('co')
+const { run, reach, race, lift, breaker } = require('@plugs/main')
+const axios = require('axios')
+const r = require('ramda')

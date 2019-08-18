@@ -69,27 +69,25 @@ const race = (...pN) => _I_ =>
   })
 
 /**
- * takes an array of '(_I_, _E_)' fns and plugs them
+ * takes an array of plugs and returns a plug that runs them
     together in order. Requires three instantiated channels
     the signature of each fn: see example 'plug' below
  */
-const run = (...fns) => _I_ =>
+const run = (...fns) => _E_ => _I_ =>
   co(function*() {
-    // console.log('in run')
-    try {
-      const _O_ = yield r.pipeWith(r.then)(fns)(_I_)
-      return _O_
-    } catch (E) {
-      console.log('Error in `run`:', E)
-      _I_.close()
-    }
+    const primedFns = r.map(fn => fn(_E_))(fns)
+    const _O_ = yield r.pipeWith(r.then)(primedFns)(_I_)
+    return _O_
   })
 
+/**
+ * A plugs wrapper over Axios
+ */
 const reach = _E_ => _I_ =>
   co(function*() {
-    const [url, opts = {}] = yield _I_.take()
+    const { fetch_url, fetch_opts = {} } = yield _I_.take()
     try {
-      const res = yield axios.get(url, opts)
+      const res = yield axios.get(fetch_url, fetch_opts)
       const data = yield res.data
       const _O_ = new Channel()
       _O_.put(data)
@@ -102,22 +100,24 @@ const reach = _E_ => _I_ =>
 
 const governer = 'something that can be used for: debounce, throttle, etc.'
 
-// // EXAMPLE run with reach, lift and breaker
-// const nameLens = r.lensProp('name')
-// const getNamesList = r.pipe(
-//   r.prop('fips'),
-//   r.map(r.prop('name'))
-// )
+// EXAMPLE run with reach, lift and breaker
+const nameLens = r.lensProp('name')
+const getNamesList = r.pipe(
+  r.prop('fips'),
+  r.map(r.prop('name'))
+)
 
-// co(function*() {
-//   const _E_ = new Channel()
-//   const _I_ = new Channel()
-//   _I_.put(['https://api.census.gov/data/2017/acs/acs1/geography.json', {}])
-//   // const _O_ = yield run(reach(_E_), lift(getNamesList)(_E_))(_I_)
-//   // const O = _O_.take()
-//   const O = yield run(reach(_E_), lift(getNamesList)(_E_), breaker()(_E_))(_I_)
-//   return O
-// }) //?
+co(function*() {
+  const _E_ = new Channel()
+  const _I_ = new Channel()
+  _I_.put({
+    fetch_url: 'https://api.census.gov/data/2017/acs/acs1/geography.json',
+    fetch_opts: {},
+  })
+
+  const O = yield run(reach, lift(getNamesList), breaker())(_E_)(_I_)
+  return O
+}) //?
 
 module.exports = {
   run,
