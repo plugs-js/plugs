@@ -3,7 +3,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "version": "0.0.4-alpha.3",
+  "version": "0.0.5-alpha.0",
   "description": "core utilities for working with plugs",
   "main": "index.js",
   "scripts": {
