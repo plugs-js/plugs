@@ -12,7 +12,16 @@
   "author": "Logan Powell",
   "license": "MIT",
   "dependencies": {
-    "@plugs/main": "^0.0.5-alpha.2"
+    "@plugs/main": "^0.0.5-alpha.2",
+    "nanographql": "^2.0.0",
+    "swivel": "^4.0.3"
   },
-  "gitHead": "4f30533044f8c1f6967ff29a7eae6c17ea5b19e1"
+  "peerDependencies": {
+    "dexie": "^2.0.4"
+  },
+  "gitHead": "4f30533044f8c1f6967ff29a7eae6c17ea5b19e1",
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-preset-env": "^1.7.0"
+  }
 }

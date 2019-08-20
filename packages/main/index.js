@@ -85,9 +85,9 @@ const run = (...fns) => _E_ => _I_ =>
  */
 const reach = _E_ => _I_ =>
   co(function*() {
-    const { fetch_url, fetch_opts = {} } = yield _I_.take()
+    const opts = yield _I_.take()
     try {
-      const res = yield axios.get(fetch_url, fetch_opts)
+      const res = yield axios(opts)
       const data = yield res.data
       const _O_ = new Channel()
       _O_.put(data)
@@ -106,13 +106,16 @@ const getNamesList = r.pipe(
   r.prop('fips'),
   r.map(r.prop('name'))
 )
+const log = r.bind(console.log, console)
+
+let _L_ = new Channel()
 
 co(function*() {
   const _E_ = new Channel()
   const _I_ = new Channel()
   _I_.put({
-    fetch_url: 'https://api.census.gov/data/2017/acs/acs1/geography.json',
-    fetch_opts: {},
+    method: 'get',
+    url: 'https://api.census.gov/data/2017/acs/acs1/geography.json',
   })
 
   const O = yield run(reach, lift(getNamesList), breaker())(_E_)(_I_)
