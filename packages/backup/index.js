@@ -9,12 +9,11 @@ const appendCensus = async () => {
   const res = await fetch(
     'https://api.census.gov/data/2017/acs/acs5?get=NAME,B01001_001E&for=state:*'
   )
-  console.log('DATA BITCH:', res)
   const data = await res.json()
   document.body.append(JSON.stringify(data, null, 2))
 }
 
-const query = gql`
+const query1 = gql`
   query {
     allCinemaDetails(before: "2017-10-04", after: "2010-01-01") {
       edges {
@@ -26,22 +25,34 @@ const query = gql`
     }
   }
 `
+const query2 = gql`
+  query {
+    stationWithEvaId(evaId: 8000105) {
+      name
+      location {
+        latitude
+        longitude
+      }
+      picture {
+        url
+      }
+    }
+  }
+`
+const headers = {
+  'Accept': 'application/json',
+  'Connection': 'keep-alive',
+  'Content-Type': 'application/json',
+}
 
-const appendGraphQL = async () => {
+const appendGraphQL = async (url, query) => {
+  // console.log('query():', query())
   try {
-    const res = await fetch('https://etmdb.com/graphql', {
+    const res = await fetch(`${url}?${query()}`.replace(/\s+|\\n|\"/g, ''), {
       body: query(),
       method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Accept-Language': 'en-US,en;q=0.9,pt-PT;q=0.8,pt;q=0.7,fr;q=0.6',
-        'Connection': 'keep-alive',
-        'Content-Length': '192',
-        'Content-Type': 'application/json',
-        'DNT': '1',
-      },
+      // mode: 'cors',
+      headers,
     })
     const data = await res.json()
     document.body.append(JSON.stringify(data, null, 2))
@@ -59,9 +70,17 @@ navigator.serviceWorker
     //   console.log('swivel `data`:', data)
     //   context.reply('data', 'BLOOP')
     // })
-    appendGraphQL()
+    appendGraphQL('https://etmdb.com/graphql', query1)
     appendCensus()
   })
 
-setTimeout(() => appendGraphQL(), 3000)
+setTimeout(() => appendGraphQL('https://etmdb.com/graphql', query1), 3000)
+setTimeout(
+  () =>
+    appendGraphQL(
+      'https://cors-e.herokuapp.com/https://bahnql.herokuapp.com/graphql',
+      query2
+    ),
+  3000
+)
 setTimeout(() => appendCensus(), 6000)

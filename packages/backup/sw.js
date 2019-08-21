@@ -5,7 +5,7 @@ importScripts(
   'https://unpkg.com/swivel@4.0.3/dist/swivel.min.js'
 )
 
-let static = ['index.html']
+let static = ['index.html', 'index.js']
 
 addEventListener('install', async evt => {
   console.log('Service Worker installing.')
@@ -30,13 +30,21 @@ addEventListener('message', async evt =>
 
 addEventListener('fetch', evt => {
   // console.log('from ./sw.js fetch:', e)
-  console.log('fetch e:', evt)
-
-  const req = evt.request
+  // console.log('fetch e:', evt)
+  var db = new Dexie('post_cache')
+  const req = evt.request.clone()
   const url = new URL(req.url) // create a url object
-  // console.log('url.origin', url.origin)
-  if (req.method === 'POST') {
-    graphql(evt)
+  console.log('url.origin:', url.origin)
+  if (
+    req.method === 'POST' && // is a POST request
+    url.pathname.match(/graphql/g).length > 0 && // is a graphql request
+    url.href.match(/mutation/g) === null // isn't a mutation
+  ) {
+    console.log('mutations:', url.href.match(/mutation/g))
+    console.log('req:', req)
+    console.log('url:', url)
+    console.log('evt:', evt)
+    evt.respondWith(graphql(db, evt))
   } else if (url.origin === location.origin) {
     evt.respondWith($thenNet(req)) // prefer cache first if own resource
   } else {
@@ -45,14 +53,13 @@ addEventListener('fetch', evt => {
 })
 
 const $thenNet = async req => {
-  console.log('$thenNet req =>', req)
+  // console.log('$thenNet req =>', req)
   const $ed = await caches.match(req) // match any previous requests
   return $ed || fetch(req) // return matches if there, else fetch
 }
 
 const netThen$ = async req => {
-  console.log('netThen$ r =>', req)
-  console.log('location.origin', location.origin)
+  // console.log('netThen$ r =>', req)
   // We will cache all POST requests, but in the real world, you will probably filter for
   // specific URLs like if(... || event.request.url.href.match(...))
 
@@ -67,14 +74,32 @@ const netThen$ = async req => {
     return await caches.match(req) // return any matches
   }
 }
+const graphql = async (db, evt) => {
+  const req = evt.request.clone()
+  const url = new URL(req.url)
+  // console.log('netThen$ r =>', req)
+  // We will cache all POST requests, but in the real world, you will probably filter for
+  // specific URLs like if(... || event.request.url.href.match(...))
 
-const graphql = evt => {
+  const $er = await caches.open('graphql_$') // create a new cache object
+  try {
+    const res = await fetch(req)
+    $er.put(url.href, res.clone()) // put a new k:v pair into the object
+    return res
+  } catch (err) {
+    // if fetch doesn't work
+    console.log('netThen$ ERROR:', err)
+    return await caches.match(req) // return any matches
+  }
+}
+//https://a.kabachnik.info/offline-post-requests-via-service-worker-and-indexeddb.html
+const graphqlOG = (db, evt) => {
   // Init the cache. We use Dexie here to simplify the code. You can use any other
   // way to access IndexedDB of course.
-  console.log("req.method === 'POST'")
-  var db = new Dexie('post_cache')
+  // console.log("req.method === 'POST'")
+
   db.version(1).stores({
-    post_cache: 'key,response,timestamp',
+    post_cache: 'key, response, timestamp',
   })
 
   evt.respondWith(
@@ -82,6 +107,9 @@ const graphql = evt => {
     fetch(evt.request.clone())
       .then(res => {
         // If it works, put the response into IndexedDB
+        const req = evt.request.clone()
+        const url = req.url
+        console.log('URL in caching:', url)
         cachePut(evt.request.clone(), res.clone(), db.post_cache)
         return res
       })
@@ -105,21 +133,21 @@ const graphql = evt => {
 //   context.reply('data', 'BLOOP')
 // })
 
-function serializeRequest(request) {
+function serializeRequest(req) {
   var serialized = {
-    url: request.url,
-    headers: serializeHeaders(request.headers),
-    method: request.method,
-    mode: request.mode,
-    credentials: request.credentials,
-    cache: request.cache,
-    redirect: request.redirect,
-    referrer: request.referrer,
+    url: req.url,
+    headers: serializeHeaders(req.headers),
+    method: req.method,
+    mode: req.mode,
+    credentials: req.credentials,
+    cache: req.cache,
+    redirect: req.redirect,
+    referrer: req.referrer,
   }
 
   // Only if method is not `GET` or `HEAD` is the request allowed to have body.
-  if (request.method !== 'GET' && request.method !== 'HEAD') {
-    return request
+  if (req.method !== 'GET' && req.method !== 'HEAD') {
+    return req
       .clone()
       .text()
       .then(function(body) {
@@ -133,18 +161,18 @@ function serializeRequest(request) {
 /**
  * Serializes a Response into a plain JS object
  *
- * @param response
+ * @param res
  * @returns Promise
  */
 
-function serializeResponse(response) {
+function serializeResponse(res) {
   var serialized = {
-    headers: serializeHeaders(response.headers),
-    status: response.status,
-    statusText: response.statusText,
+    headers: serializeHeaders(res.headers),
+    status: res.status,
+    statusText: res.statusText,
   }
 
-  return response
+  return res
     .clone()
     .text()
     .then(function(body) {
@@ -187,8 +215,8 @@ function deserializeResponse(data) {
  * @param request
  * @return string
  */
-const getPostId = async request => {
-  return JSON.stringify(serializeRequest(request.clone()))
+const getPostId = async req => {
+  return JSON.stringify(serializeRequest(req.clone()))
 }
 
 /**
@@ -197,12 +225,12 @@ const getPostId = async request => {
  * @param data
  * @returns Promise
  */
-function cachePut(request, response, store) {
+function cachePut(req, res, store) {
   var key, data
-  getPostId(request.clone())
+  getPostId(req.clone())
     .then(function(id) {
       key = id
-      return serializeResponse(response.clone())
+      return serializeResponse(res.clone())
     })
     .then(function(serializedResponse) {
       data = serializedResponse
@@ -218,13 +246,13 @@ function cachePut(request, response, store) {
 }
 
 /**
- * Returns the cached response for the given request or an empty 503-response  for a cache miss.
+ * Returns the cached response for the given req or an empty 503-response  for a cache miss.
  *
- * @param request
+ * @param req
  * @return Promise
  */
-function cacheMatch(request) {
-  return getPostId(request.clone())
+function cacheMatch(req) {
+  return getPostId(req.clone())
     .then(function(id) {
       return store.get(id)
     })
