@@ -6,68 +6,58 @@ import * as R from 'ramda'
 import 'setimmediate'
 import { _I_ as _1_, _O_ as _2_ } from './message'
 
-// if (!('serviceWorker' in navigator)) {
-//   return
-// }
+if (!('serviceWorker' in navigator)) {
+  return
+}
+
+// new Worker('')
 
 const _3_ = new Channel()
 const _4_ = new Channel()
 
 const defaultConfig = {
-  SW_file: 'sw.js',
+  SW_file: '/sw.js',
   IO_array: [[_1_, _2_], [_3_, _4_]],
 }
 
-/**
- var msg_chan = new MessageChannel();
+// hack for parcel to notice my service worker
+navigator.serviceWorker.register('sw.js')
 
-    // Handler for recieving message reply from service worker
-    msg_chan.port1.onmessage = function(event){
-        if(event.data.error){
-            reject(event.data.error);
-        }else{
-            resolve(event.data);
-        }
-    };
-
-    // Send message to service worker along with port for reply
-    navigator.serviceWorker.controller.postMessage("Client 1 says '"+msg+"'", [msg_chan.port2]);
- */
 export const registerBackup = (config = defaultConfig) =>
   //using the worker returned: thank god for SO -> https://stackoverflow.com/a/51291570/7506767
   navigator.serviceWorker.register(config.SW_file).then(async worker => {
     const sw = await navigator.serviceWorker.ready
     const I_chans = R.pluck(0, config.IO_array)
-    // console.log('I_chans:', I_chans)
+    console.log('I_chans:', I_chans)
     const O_chans = R.pluck(1, config.IO_array)
-    // console.log('O_chans:', O_chans)
+    console.log('O_chans:', O_chans)
     co(function*() {
       while (true) {
         // keep alive and create new `msg_chan` for each yield
         const [msg, chan] = yield alts(I_chans)
+        /**
+         * see https://developer.mozilla.org/en-US/docs/Web/API/Worker/postMessage#Syntax
+         * transferred objects are handed off and can't be used again!
+         *  */
+
         const msg_chan = new MessageChannel()
         // console.log('Chosen msg:', msg)
         const idx = R.indexOf(chan, I_chans)
         // console.log('Chosen chan:', chan)
         // console.log('idx:', idx)
-        co(function*() {
-          msg_chan.port1.onmessage = event => {
-            console.log('EVENT:', event)
-            if (event.data.error) {
-              console.log(
-                'msg_chan.port1.onmessage rejected:',
-                event.data.error
-              )
-              reject(event.data.error) // Blue TODO add _E_ chan
-            } else {
-              console.log(`{event.data} put! in O_chan`)
-              O_chans[idx].put(event.data)
-              resolve(event.data)
-            }
+
+        msg_chan.port1.onmessage = event => {
+          console.log('EVENT:', event)
+          if (event.data.error) {
+            console.log('msg_chan.port1.onmessage rejected:', event.data.error)
+            throw event.data.error // Blue TODO add _E_ chan
+          } else {
+            console.log(`{event.data} put! in O_chan`)
+            O_chans[idx].put(event.data)
+            return event.data
           }
-          const my_chan = msg_chan.port2
-          worker.active.postMessage(msg, [my_chan])
-        })
+        }
+        worker.active.postMessage(msg, [msg_chan.port2])
       }
     })
   })

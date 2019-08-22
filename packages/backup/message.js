@@ -1,5 +1,5 @@
 import co from 'co'
-import gql from 'nanographql'
+// import gql from 'nanographql'
 import 'setimmediate'
 import { Channel } from 'core-async'
 

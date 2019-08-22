@@ -1,7 +1,6 @@
 importScripts(
   'https://unpkg.com/ramda@0.26.1/dist/ramda.min.js'
   // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
-  // 'https://unpkg.com/swivel@4.0.3/dist/swivel.min.js'
 )
 
 let static = ['index.html', 'index.js']
@@ -22,17 +21,12 @@ addEventListener('activate', evt => {
   evt.waitUntil(self.clients.claim())
 })
 
-// addEventListener('message', evt =>
-//   console.log('Service Worker message recieved!:', evt)
-// )
+// see -> https://flaviocopes.com/channel-messaging-api/
 self.addEventListener('message', function(event) {
   console.log('SW Received Message: ' + event.data)
   event.ports[0].postMessage("SW Says 'Hello back!'")
-  // event.ports[0].close()
+  // event.ports[0].close() // option for closing ones used
 })
-// swivel.on('data', function handler(context, ...data) {
-//   console.log('swivel received data in sw.js:', data)
-// })
 
 addEventListener('fetch', evt => {
   const req = evt.request.clone()
@@ -80,4 +74,3 @@ const graphql = async req => {
     return await caches.match(url.href) // return any matches
   }
 }
-// other approach using IDB: https://a.kabachnik.info/offline-post-requests-via-service-worker-and-indexeddb.html

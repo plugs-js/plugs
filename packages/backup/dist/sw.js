@@ -118,7 +118,8 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"sw.js":[function(require,module,exports) {
-importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js', 'https://unpkg.com/axios@0.19.0/dist/axios.min.js', 'https://unpkg.com/swivel@4.0.3/dist/swivel.min.js');
+importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js' // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
+);
 let static = ['index.html', 'index.js'];
 addEventListener('install', async evt => {
   console.log('Service Worker installing.');
@@ -133,11 +134,12 @@ addEventListener('install', async evt => {
 addEventListener('activate', evt => {
   console.log('Service Worker activating.');
   evt.waitUntil(self.clients.claim());
-});
-addEventListener('message', evt => console.log('Service Worker message recieved!:', evt)); // swivel.on('data', function handler(context, ...data) {
-//   console.log('swivel received data in sw.js:', data)
-// })
+}); // see -> https://flaviocopes.com/channel-messaging-api/
 
+self.addEventListener('message', function (event) {
+  console.log('SW Received Message: ' + event.data);
+  event.ports[0].postMessage("SW Says 'Hello back!'"); // event.ports[0].close() // option for closing ones used
+});
 addEventListener('fetch', evt => {
   const req = evt.request.clone();
   const url = new URL(req.url); // create a url object
@@ -192,7 +194,7 @@ const graphql = async req => {
 
     return await caches.match(url.href); // return any matches
   }
-}; // other approach using IDB: https://a.kabachnik.info/offline-post-requests-via-service-worker-and-indexeddb.html
+};
 },{}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -221,7 +223,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52370" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53927" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

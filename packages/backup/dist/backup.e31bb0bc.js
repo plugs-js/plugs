@@ -19023,14 +19023,13 @@ exports.send_message_to_sw = exports._O_ = exports._I_ = void 0;
 
 var _co = _interopRequireDefault(require("co"));
 
-var _nanographql = _interopRequireDefault(require("nanographql"));
-
 require("setimmediate");
 
 var _coreAsync = require("core-async");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// import gql from 'nanographql'
 const _I_ = new _coreAsync.Channel();
 
 exports._I_ = _I_;
@@ -19047,7 +19046,7 @@ exports.send_message_to_sw = send_message_to_sw;
 send_message_to_sw('SOMETHING FROM ANOTHER WORLD IMMEDIATELY'); // send_message_to_sw('SOMETHING ELSE')
 
 setTimeout(() => send_message_to_sw('SOMETHING FROM ANOTHER WORLD after 5s again'), 5000);
-},{"co":"node_modules/co/index.js","nanographql":"node_modules/nanographql/index.js","setimmediate":"node_modules/setimmediate/setImmediate.js","core-async":"node_modules/core-async/src/index.js"}],"index.js":[function(require,module,exports) {
+},{"co":"node_modules/co/index.js","setimmediate":"node_modules/setimmediate/setImmediate.js","core-async":"node_modules/core-async/src/index.js"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -19081,43 +19080,31 @@ function _iterableToArrayLimit(arr, i) { var _arr = []; var _n = true; var _d = 
 
 function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
-// if (!('serviceWorker' in navigator)) {
-//   return
-// }
+if (!('serviceWorker' in navigator)) {
+  return;
+} // new Worker('')
+
+
 const _3_ = new _coreAsync.Channel();
 
 const _4_ = new _coreAsync.Channel();
 
 const defaultConfig = {
-  SW_file: 'sw.js',
-  IO_array: [[_message._I_, _message._O_], [_3_, _4_]]
-  /**
-   var msg_chan = new MessageChannel();
-  
-      // Handler for recieving message reply from service worker
-      msg_chan.port1.onmessage = function(event){
-          if(event.data.error){
-              reject(event.data.error);
-          }else{
-              resolve(event.data);
-          }
-      };
-  
-      // Send message to service worker along with port for reply
-      navigator.serviceWorker.controller.postMessage("Client 1 says '"+msg+"'", [msg_chan.port2]);
-   */
+  SW_file: '/sw.js',
+  IO_array: [[_message._I_, _message._O_], [_3_, _4_]] // hack for parcel to notice my service worker
 
 };
+navigator.serviceWorker.register("/sw.js");
 
 const registerBackup = function registerBackup() {
   let config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultConfig;
   return (//using the worker returned: thank god for SO -> https://stackoverflow.com/a/51291570/7506767
     navigator.serviceWorker.register(config.SW_file).then(async worker => {
       const sw = await navigator.serviceWorker.ready;
-      const I_chans = R.pluck(0, config.IO_array); // console.log('I_chans:', I_chans)
-
-      const O_chans = R.pluck(1, config.IO_array); // console.log('O_chans:', O_chans)
-
+      const I_chans = R.pluck(0, config.IO_array);
+      console.log('I_chans:', I_chans);
+      const O_chans = R.pluck(1, config.IO_array);
+      console.log('O_chans:', O_chans);
       (0, _co.default)(function* () {
         while (true) {
           // keep alive and create new `msg_chan` for each yield
@@ -19125,29 +19112,31 @@ const registerBackup = function registerBackup() {
                 _ref2 = _slicedToArray(_ref, 2),
                 msg = _ref2[0],
                 chan = _ref2[1];
+          /**
+           * see https://developer.mozilla.org/en-US/docs/Web/API/Worker/postMessage#Syntax
+           * transferred objects are handed off and can't be used again!
+           *  */
+
 
           const msg_chan = new MessageChannel(); // console.log('Chosen msg:', msg)
 
           const idx = R.indexOf(chan, I_chans); // console.log('Chosen chan:', chan)
           // console.log('idx:', idx)
 
-          (0, _co.default)(function* () {
-            msg_chan.port1.onmessage = event => {
-              console.log('EVENT:', event);
+          msg_chan.port1.onmessage = event => {
+            console.log('EVENT:', event);
 
-              if (event.data.error) {
-                console.log('msg_chan.port1.onmessage rejected:', event.data.error);
-                reject(event.data.error); // Blue TODO add _E_ chan
-              } else {
-                console.log(`{event.data} put! in O_chan`);
-                O_chans[idx].put(event.data);
-                resolve(event.data);
-              }
-            };
+            if (event.data.error) {
+              console.log('msg_chan.port1.onmessage rejected:', event.data.error);
+              throw event.data.error; // Blue TODO add _E_ chan
+            } else {
+              console.log(`{event.data} put! in O_chan`);
+              O_chans[idx].put(event.data);
+              return event.data;
+            }
+          };
 
-            const my_chan = msg_chan.port2;
-            worker.active.postMessage(msg, [my_chan]);
-          });
+          worker.active.postMessage(msg, [msg_chan.port2]);
         }
       });
     })
@@ -19231,7 +19220,7 @@ const send_message_to_sw = msg => (0, _co.default)(function* () {
 exports.send_message_to_sw = send_message_to_sw;
 send_message_to_sw('SOMETHING IMMEDIATELY');
 setTimeout(() => send_message_to_sw('Something from this world after 5s'), 5000);
-},{"co":"node_modules/co/index.js","nanographql":"node_modules/nanographql/index.js","isomorphic-unfetch":"node_modules/isomorphic-unfetch/browser.js","core-async":"node_modules/core-async/src/index.js","ramda":"node_modules/ramda/es/index.js","setimmediate":"node_modules/setimmediate/setImmediate.js","./message":"message.js"}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"co":"node_modules/co/index.js","nanographql":"node_modules/nanographql/index.js","isomorphic-unfetch":"node_modules/isomorphic-unfetch/browser.js","core-async":"node_modules/core-async/src/index.js","ramda":"node_modules/ramda/es/index.js","setimmediate":"node_modules/setimmediate/setImmediate.js","./message":"message.js","./sw.js":[["sw.js","sw.js"],"sw.js.map","sw.js"]}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -19259,7 +19248,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "52370" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53927" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
