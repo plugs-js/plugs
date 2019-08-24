@@ -19082,8 +19082,10 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 if (!('serviceWorker' in navigator)) {
   return;
-} // new Worker('')
+} // hack for parcel to notice my service worker
 
+
+navigator.serviceWorker.register("/sw.js");
 
 const _3_ = new _coreAsync.Channel();
 
@@ -19091,20 +19093,18 @@ const _4_ = new _coreAsync.Channel();
 
 const defaultConfig = {
   SW_file: '/sw.js',
-  IO_array: [[_message._I_, _message._O_], [_3_, _4_]] // hack for parcel to notice my service worker
-
+  IO_array: [[_message._I_, _message._O_], [_3_, _4_]]
 };
-navigator.serviceWorker.register("/sw.js");
 
 const registerBackup = function registerBackup() {
   let config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultConfig;
   return (//using the worker returned: thank god for SO -> https://stackoverflow.com/a/51291570/7506767
     navigator.serviceWorker.register(config.SW_file).then(async worker => {
-      const sw = await navigator.serviceWorker.ready;
-      const I_chans = R.pluck(0, config.IO_array);
-      console.log('I_chans:', I_chans);
-      const O_chans = R.pluck(1, config.IO_array);
-      console.log('O_chans:', O_chans);
+      await navigator.serviceWorker.ready;
+      const I_chans = R.pluck(0, config.IO_array); // console.log('I_chans:', I_chans)
+
+      const O_chans = R.pluck(1, config.IO_array); // console.log('O_chans:', O_chans)
+
       (0, _co.default)(function* () {
         while (true) {
           // keep alive and create new `msg_chan` for each yield
@@ -19124,13 +19124,12 @@ const registerBackup = function registerBackup() {
           // console.log('idx:', idx)
 
           msg_chan.port1.onmessage = event => {
-            console.log('EVENT:', event);
-
+            // console.log('EVENT:', event)
             if (event.data.error) {
               console.log('msg_chan.port1.onmessage rejected:', event.data.error);
               throw event.data.error; // Blue TODO add _E_ chan
             } else {
-              console.log(`{event.data} put! in O_chan`);
+              // console.log(`${event.data} put! in O_chan`)
               O_chans[idx].put(event.data);
               return event.data;
             }
@@ -19148,7 +19147,7 @@ registerBackup(defaultConfig);
 (0, _co.default)(function* () {
   while (true) {
     const message = yield _4_.take();
-    console.log('INCOMMING From another world!:', message);
+    console.log('Client got message from _4_.take():', message);
   }
 });
 
@@ -19193,7 +19192,7 @@ const headers = {
 const appendGraphQL = async (url, query) => {
   // console.log('query():', query())
   try {
-    const res = await (0, _isomorphicUnfetch.default)(`${url}?${query()}`.replace(/\s+|\\n/g, ''), {
+    const res = await (0, _isomorphicUnfetch.default)(url, {
       body: query(),
       method: 'POST',
       // mode: 'cors',
@@ -19201,17 +19200,35 @@ const appendGraphQL = async (url, query) => {
     }); // console.log('res:', res)
 
     const data = await res.json();
-    document.body.append(JSON.stringify(data, null, 2));
+    const str = JSON.stringify(data, null, 2) || 'NAN!';
+    document.body.append(str); // console.log(str)
   } catch (err) {
     console.error('ERROR In graqphl fetch:', err);
   }
-};
+}; // const appendGraphQL = async (url, query) => {
+//   let timeout = new Promise((resolve, reject) => {
+//     setTimeout(reject, 20000, 'request timed out')
+//   })
+//   let get = new Promise((resolve, reject) => {
+//     const res = fetch(`${url}?${query()}`.replace(/\s+|\\n/g, ''), {
+//       body: query(),
+//       method: 'POST',
+//       // mode: 'cors',
+//       headers,
+//     })
+//       .then(response => response.json())
+//       .then(json => document.body.append(JSON.stringify(json, null, 2)))
+//       .catch(reject)
+//   })
+//   return Promise.race([timeout, get]).catch(err => console.error('ERROR In graqphl fetch:', err))
+// }
+
 
 appendGraphQL('https://etmdb.com/graphql', query1);
 appendCensus();
-setTimeout(() => appendGraphQL('https://etmdb.com/graphql', query1), 3000);
+setTimeout(() => appendGraphQL('https://etmdb.com/graphql', query1), 4000);
 setTimeout(() => appendGraphQL('https://cors-e.herokuapp.com/https://bahnql.herokuapp.com/graphql', query2), 3000);
-setTimeout(() => appendCensus(), 6000); // setTimeout(() => swivel.emit('data', 'one', 'two'), 6000)
+setTimeout(() => appendCensus(), 7000); // setTimeout(() => swivel.emit('data', 'one', 'two'), 6000)
 
 const send_message_to_sw = msg => (0, _co.default)(function* () {
   _3_.put(msg);
@@ -19219,7 +19236,7 @@ const send_message_to_sw = msg => (0, _co.default)(function* () {
 
 exports.send_message_to_sw = send_message_to_sw;
 send_message_to_sw('SOMETHING IMMEDIATELY');
-setTimeout(() => send_message_to_sw('Something from this world after 5s'), 5000);
+setTimeout(() => send_message_to_sw('Something from this world after 9s'), 9000);
 },{"co":"node_modules/co/index.js","nanographql":"node_modules/nanographql/index.js","isomorphic-unfetch":"node_modules/isomorphic-unfetch/browser.js","core-async":"node_modules/core-async/src/index.js","ramda":"node_modules/ramda/es/index.js","setimmediate":"node_modules/setimmediate/setImmediate.js","./message":"message.js","./sw.js":[["sw.js","sw.js"],"sw.js.map","sw.js"]}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -19248,7 +19265,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53927" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55488" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

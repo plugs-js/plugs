@@ -1,16 +1,17 @@
 import co from 'co'
 import gql from 'nanographql'
 import fetch from 'isomorphic-unfetch'
-import { Channel, alts } from 'core-async'
+import {Channel, alts} from 'core-async'
 import * as R from 'ramda'
 import 'setimmediate'
-import { _I_ as _1_, _O_ as _2_ } from './message'
+import {_I_ as _1_, _O_ as _2_} from './message'
 
 if (!('serviceWorker' in navigator)) {
   return
 }
 
-// new Worker('')
+// hack for parcel to notice my service worker
+navigator.serviceWorker.register('sw.js')
 
 const _3_ = new Channel()
 const _4_ = new Channel()
@@ -20,17 +21,14 @@ const defaultConfig = {
   IO_array: [[_1_, _2_], [_3_, _4_]],
 }
 
-// hack for parcel to notice my service worker
-navigator.serviceWorker.register('sw.js')
-
 export const registerBackup = (config = defaultConfig) =>
   //using the worker returned: thank god for SO -> https://stackoverflow.com/a/51291570/7506767
   navigator.serviceWorker.register(config.SW_file).then(async worker => {
-    const sw = await navigator.serviceWorker.ready
+    await navigator.serviceWorker.ready
     const I_chans = R.pluck(0, config.IO_array)
-    console.log('I_chans:', I_chans)
+    // console.log('I_chans:', I_chans)
     const O_chans = R.pluck(1, config.IO_array)
-    console.log('O_chans:', O_chans)
+    // console.log('O_chans:', O_chans)
     co(function*() {
       while (true) {
         // keep alive and create new `msg_chan` for each yield
@@ -47,12 +45,12 @@ export const registerBackup = (config = defaultConfig) =>
         // console.log('idx:', idx)
 
         msg_chan.port1.onmessage = event => {
-          console.log('EVENT:', event)
+          // console.log('EVENT:', event)
           if (event.data.error) {
             console.log('msg_chan.port1.onmessage rejected:', event.data.error)
             throw event.data.error // Blue TODO add _E_ chan
           } else {
-            console.log(`{event.data} put! in O_chan`)
+            // console.log(`${event.data} put! in O_chan`)
             O_chans[idx].put(event.data)
             return event.data
           }
@@ -67,7 +65,7 @@ registerBackup(defaultConfig)
 co(function*() {
   while (true) {
     const message = yield _4_.take()
-    console.log('INCOMMING From another world!:', message)
+    console.log('Client got message from _4_.take():', message)
   }
 })
 
@@ -114,7 +112,7 @@ const headers = {
 const appendGraphQL = async (url, query) => {
   // console.log('query():', query())
   try {
-    const res = await fetch(`${url}?${query()}`.replace(/\s+|\\n/g, ''), {
+    const res = await fetch(url, {
       body: query(),
       method: 'POST',
       // mode: 'cors',
@@ -122,24 +120,40 @@ const appendGraphQL = async (url, query) => {
     })
     // console.log('res:', res)
     const data = await res.json()
-    document.body.append(JSON.stringify(data, null, 2))
+    const str = JSON.stringify(data, null, 2) || 'NAN!'
+    document.body.append(str)
+    // console.log(str)
   } catch (err) {
     console.error('ERROR In graqphl fetch:', err)
   }
 }
 
+// const appendGraphQL = async (url, query) => {
+//   let timeout = new Promise((resolve, reject) => {
+//     setTimeout(reject, 20000, 'request timed out')
+//   })
+//   let get = new Promise((resolve, reject) => {
+//     const res = fetch(`${url}?${query()}`.replace(/\s+|\\n/g, ''), {
+//       body: query(),
+//       method: 'POST',
+//       // mode: 'cors',
+//       headers,
+//     })
+//       .then(response => response.json())
+//       .then(json => document.body.append(JSON.stringify(json, null, 2)))
+//       .catch(reject)
+//   })
+//   return Promise.race([timeout, get]).catch(err => console.error('ERROR In graqphl fetch:', err))
+// }
+
 appendGraphQL('https://etmdb.com/graphql', query1)
 appendCensus()
-setTimeout(() => appendGraphQL('https://etmdb.com/graphql', query1), 3000)
+setTimeout(() => appendGraphQL('https://etmdb.com/graphql', query1), 4000)
 setTimeout(
-  () =>
-    appendGraphQL(
-      'https://cors-e.herokuapp.com/https://bahnql.herokuapp.com/graphql',
-      query2
-    ),
+  () => appendGraphQL('https://cors-e.herokuapp.com/https://bahnql.herokuapp.com/graphql', query2),
   3000
 )
-setTimeout(() => appendCensus(), 6000)
+setTimeout(() => appendCensus(), 7000)
 // setTimeout(() => swivel.emit('data', 'one', 'two'), 6000)
 export const send_message_to_sw = msg =>
   co(function*() {
@@ -148,4 +162,4 @@ export const send_message_to_sw = msg =>
 
 send_message_to_sw('SOMETHING IMMEDIATELY')
 
-setTimeout(() => send_message_to_sw('Something from this world after 5s'), 5000)
+setTimeout(() => send_message_to_sw('Something from this world after 9s'), 9000)

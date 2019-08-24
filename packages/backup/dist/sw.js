@@ -118,8 +118,10 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"sw.js":[function(require,module,exports) {
-importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js' // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
+importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js', 'https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval-iife.min.js', // 'https://unpkg.com/crypto-js@3.1.8/index.js',
+'https://unpkg.com/crypto-js@3.1.8/crypto-js.js' // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
 );
+console.log('CryptoJS:', CryptoJS);
 let static = ['index.html', 'index.js'];
 addEventListener('install', async evt => {
   console.log('Service Worker installing.');
@@ -134,11 +136,15 @@ addEventListener('install', async evt => {
 addEventListener('activate', evt => {
   console.log('Service Worker activating.');
   evt.waitUntil(self.clients.claim());
+});
+addEventListener('error', evt => {
+  console.log('Service Worker caught error:', evt.filename, evt.lineno, evt.colno, evt.message);
 }); // see -> https://flaviocopes.com/channel-messaging-api/
 
-self.addEventListener('message', function (event) {
+addEventListener('message', function (event) {
   console.log('SW Received Message: ' + event.data);
-  event.ports[0].postMessage("SW Says 'Hello back!'"); // event.ports[0].close() // option for closing ones used
+  event.ports[0].postMessage(`SW ECHO: ${event.data}`);
+  event.ports[0].close(); // option for closing ones used
 });
 addEventListener('fetch', evt => {
   const req = evt.request.clone();
@@ -150,27 +156,27 @@ addEventListener('fetch', evt => {
   url.pathname.match(/graphql/g).length > 0 && // is a graphql request
   url.href.match(/mutation/g) === null // isn't a mutation
   ) {
-      evt.respondWith(graphql(req));
+      // console.log('BLOOPING IN THE BLOOPER')
+      evt.respondWith(graphql_$$(req));
     } else if (url.origin === location.origin) {
-    evt.respondWith($$thenNet(req)); // prefer cache first if own resource
+    evt.respondWith($$_fetch(req)); // prefer cache first if own resource
   } else {
-    evt.respondWith(netThen$$(req)); // prefer network first for external
+    evt.respondWith(fetch_$$(req)); // prefer network first for external
   }
 });
 
-const $$thenNet = async req => {
-  // console.log('$$thenNet req =>', req)
-  const $R = await caches.match(req); // match any previous requests
+const $$_fetch = async req => {
+  const $R$ = await caches.match(req); // match any previous requests
 
-  return $R || fetch(req); // return matches if there, else fetch
+  return $R$ || fetch(req); // return matches if there, else fetch
 };
 
-const netThen$$ = async req => {
+const fetch_$$ = async req => {
   const $R$ = await caches.open('$fetch$'); // create a new cache object
 
   try {
-    const res = await fetch(req);
-    $R$.put(req, res.clone()); // put a new k:v pair into the object
+    const res = await fetch(req.clone());
+    $R$.put(req.clone(), res.clone()); // put a new k:v pair into the object
 
     return res;
   } catch (err) {
@@ -180,20 +186,77 @@ const netThen$$ = async req => {
   }
 };
 
-const graphql = async req => {
-  const url = new URL(req.url);
-  const $R$ = await caches.open('$graphql$'); // create a new cache object
+const $graphql$ = new idbKeyval.Store('$graphql$', 'POSTs'); // create a simple K:V store-like cache API
+// See -> https://medium.com/@jono/cache-graphql-post-requests-with-service-worker-100a822a388a
+
+const graphql_$$ = async req => {
+  let promise = null;
+  let $R$ = await getCache(req.clone()); // hash the request for key to match
+
+  let fetchPromise = fetch(req.clone()).then(res => {
+    setCache(req.clone(), res.clone());
+    return res;
+  }).catch(err => {
+    console.error(err);
+  });
+  return $R$ ? Promise.resolve($R$) : fetchPromise;
+};
+
+const serializeResponse = async res => {
+  let serializedHeaders = {};
+
+  for (var entry of res.headers.entries()) {
+    serializedHeaders[entry[0]] = entry[1];
+  }
+
+  let serialized = {
+    headers: serializedHeaders,
+    status: res.status,
+    statusText: res.statusText
+  };
+  serialized.body = await res.json();
+  return serialized;
+};
+
+const setCache = async (req, res) => {
+  var key, data;
+  let body = await req.json();
+  let id = CryptoJS.MD5(body.query).toString();
+  var entry = {
+    query: body.query,
+    response: await serializeResponse(res),
+    timestamp: Date.now()
+  };
+  idbKeyval.set(id, entry, $graphql$);
+};
+
+const getCache = async req => {
+  let data;
 
   try {
-    const res = await fetch(req);
-    $R$.put(url.href, res.clone()); // put a new k:v pair into the object
+    let body = await req.json();
+    let id = CryptoJS.MD5(body.query).toString();
+    data = await idbKeyval.get(id, $graphql$);
+    if (!data) return null; // Check cache max age.
 
-    return res;
+    let cacheControl = req.headers.get('Cache-Control');
+    let maxAge = cacheControl ? parseInt(cacheControl.split('=')[1]) : 3600; // throttle
+
+    if (Date.now() - data.timestamp > maxAge * 1000) {
+      console.log(`Cached data is stale. Loading data from API endpoint...`);
+      return null;
+    }
+
+    console.log(`Loading response from cache...`);
+    return new Response(JSON.stringify(data.response.body), data.response);
   } catch (err) {
-    console.log(`${err} graphql 'POST' query from network, trying caches...`); // TypeError: Failed to fetch
-
-    return await caches.match(url.href); // return any matches
+    return null;
   }
+};
+
+const getPostKey = async req => {
+  let body = await req.json();
+  return JSON.stringify(body);
 };
 },{}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
@@ -223,7 +286,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "53927" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55488" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
