@@ -4,7 +4,7 @@ import fetch from 'isomorphic-unfetch'
 import {Channel, alts} from 'core-async'
 import * as R from 'ramda'
 import 'setimmediate'
-import {_I_ as _1_, _O_ as _2_} from './message'
+import {_I_ as _1_, _O_ as _2_, send_message_to_sw} from './message'
 
 if (!('serviceWorker' in navigator)) {
   return
@@ -25,10 +25,11 @@ export const registerBackup = (config = defaultConfig) =>
   //using the worker returned: thank god for SO -> https://stackoverflow.com/a/51291570/7506767
   navigator.serviceWorker.register(config.SW_file).then(async worker => {
     await navigator.serviceWorker.ready
+    console.log('Service Worker ready.')
     const I_chans = R.pluck(0, config.IO_array)
-    // console.log('I_chans:', I_chans)
+    console.log('I_chans:', I_chans)
     const O_chans = R.pluck(1, config.IO_array)
-    // console.log('O_chans:', O_chans)
+    console.log('O_chans:', O_chans)
     co(function*() {
       while (true) {
         // keep alive and create new `msg_chan` for each yield
@@ -74,7 +75,13 @@ const appendCensus = async () => {
     'https://api.census.gov/data/2017/acs/acs5?get=NAME,B01001_001E&for=state:*'
   )
   const data = await res.json()
-  document.body.append(JSON.stringify(data, null, 2))
+  const json = JSON.stringify(data, null, 2) || 'NAN!'
+  const str = `Appended by appendGraphQL
+
+  ${json}
+  
+  `
+  document.getElementById('payload1').append(str)
 }
 
 const query1 = gql`
@@ -120,8 +127,10 @@ const appendGraphQL = async (url, query) => {
     })
     // console.log('res:', res)
     const data = await res.json()
-    const str = JSON.stringify(data, null, 2) || 'NAN!'
-    document.body.append(str)
+    const json = JSON.stringify(data, null, 2) || 'NAN!'
+    const str = `<h2>Appended by appendGraphQL</h2>
+    <section>${json}</section>`
+    document.getElementById('payload2').append(str)
     // console.log(str)
   } catch (err) {
     console.error('ERROR In graqphl fetch:', err)
@@ -155,10 +164,10 @@ setTimeout(
 )
 setTimeout(() => appendCensus(), 7000)
 // setTimeout(() => swivel.emit('data', 'one', 'two'), 6000)
-export const send_message_to_sw = msg =>
-  co(function*() {
-    _3_.put(msg)
-  })
+// export const send_message_to_sw = msg =>
+//   co(function*() {
+//     _3_.put(msg)
+//   })
 
 send_message_to_sw('SOMETHING IMMEDIATELY')
 

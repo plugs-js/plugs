@@ -118,10 +118,8 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"sw.js":[function(require,module,exports) {
-importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js', 'https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval-iife.min.js', // 'https://unpkg.com/crypto-js@3.1.8/index.js',
-'https://unpkg.com/crypto-js@3.1.8/crypto-js.js' // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
+importScripts('https://unpkg.com/ramda@0.26.1/dist/ramda.min.js', 'https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval-iife.min.js', 'https://unpkg.com/crypto-js@3.1.8/crypto-js.js' // 'https://unpkg.com/axios@0.19.0/dist/axios.min.js'
 );
-console.log('CryptoJS:', CryptoJS);
 let static = ['index.html', 'index.js'];
 addEventListener('install', async evt => {
   console.log('Service Worker installing.');
@@ -141,22 +139,20 @@ addEventListener('error', evt => {
   console.log('Service Worker caught error:', evt.filename, evt.lineno, evt.colno, evt.message);
 }); // see -> https://flaviocopes.com/channel-messaging-api/
 
-addEventListener('message', function (event) {
-  console.log('SW Received Message: ' + event.data);
-  event.ports[0].postMessage(`SW ECHO: ${event.data}`);
-  event.ports[0].close(); // option for closing ones used
+addEventListener('message', evt => {
+  console.log('SW Received Message: ' + evt.data);
+  evt.ports[0].postMessage(`SW ECHO: ${evt.data}`);
+  evt.ports[0].close(); // option for closing ones used
 });
 addEventListener('fetch', evt => {
   const req = evt.request.clone();
   const url = new URL(req.url); // create a url object
-
-  console.log('url.origin:', url.origin);
+  // console.log('url.origin:', url.origin)
 
   if (req.method === 'POST' && // is a POST request
   url.pathname.match(/graphql/g).length > 0 && // is a graphql request
   url.href.match(/mutation/g) === null // isn't a mutation
   ) {
-      // console.log('BLOOPING IN THE BLOOPER')
       evt.respondWith(graphql_$$(req));
     } else if (url.origin === location.origin) {
     evt.respondWith($$_fetch(req)); // prefer cache first if own resource
@@ -221,9 +217,11 @@ const serializeResponse = async res => {
 const setCache = async (req, res) => {
   var key, data;
   let body = await req.json();
-  let id = CryptoJS.MD5(body.query).toString();
+  let query = body.query.replace(/\s|\n/g, ''); // console.log('graphql request body:', query)
+
+  let id = CryptoJS.MD5(query).toString();
   var entry = {
-    query: body.query,
+    query,
     response: await serializeResponse(res),
     timestamp: Date.now()
   };
@@ -235,7 +233,8 @@ const getCache = async req => {
 
   try {
     let body = await req.json();
-    let id = CryptoJS.MD5(body.query).toString();
+    let query = body.query.replace(/\s|\n/g, '');
+    let id = CryptoJS.MD5(query).toString();
     data = await idbKeyval.get(id, $graphql$);
     if (!data) return null; // Check cache max age.
 
@@ -243,7 +242,7 @@ const getCache = async req => {
     let maxAge = cacheControl ? parseInt(cacheControl.split('=')[1]) : 3600; // throttle
 
     if (Date.now() - data.timestamp > maxAge * 1000) {
-      console.log(`Cached data is stale. Loading data from API endpoint...`);
+      console.log(`Cached data is stale. Loading data remotely...`);
       return null;
     }
 
@@ -252,11 +251,6 @@ const getCache = async req => {
   } catch (err) {
     return null;
   }
-};
-
-const getPostKey = async req => {
-  let body = await req.json();
-  return JSON.stringify(body);
 };
 },{}],"../../../../AppData/Local/nvs/node/10.16.2/x64/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
@@ -286,7 +280,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55488" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59474" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
